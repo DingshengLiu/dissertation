@@ -4,3 +4,7 @@ Model for Video Recommendation
 加入多模态，MicroLens
 加入其他多样化信息，Tencent
 优化负样本的选取
+
+原先方式：BRP+若干负样本1、5、10. HR@10接近热门推荐
+现在方式：同批次内交叉熵 相比于前者，提升近10倍
+原因：待分析

@@ -114,3 +114,23 @@ def build_test_loader(test_df, num_items, user_col='user', item_col='item',
                       num_workers=num_workers,
                       drop_last=False)
 
+class InBatchTrainDataset(Dataset):
+    def __init__(self, df, user_col, item_col):
+        # 筛出所有 (user_id, item_id) 正交互对
+        self.user_ids = df[user_col].values.astype('int64')
+        self.item_ids = df[item_col].values.astype('int64')
+
+    def __len__(self):
+        return len(self.user_ids)
+
+    def __getitem__(self, idx):
+        return self.user_ids[idx], self.item_ids[idx]
+
+def build_train_loader_inbatch(train_df,user_col,item_col,batch_size=1024, shuffle=True, num_workers=2):
+    dataset = InBatchTrainDataset(train_df,user_col,item_col)
+    return DataLoader(dataset,
+                      batch_size=batch_size,
+                      shuffle=shuffle,
+                      num_workers=num_workers,
+                      pin_memory=True,
+                      drop_last=True)  # drop_last 保证每个 batch 大小一致，避免 CrossEntropy 报错
