@@ -1,0 +1,6 @@
+1，ID协同过滤，只能考虑交互，无法纳入多模态信息，例如点赞，差评，关注等信息-----A Behavior-aware Graph Convolution Network
+Model for Video Recommendation
+2，下一步要做的BERT4Rec
+加入多模态，MicroLens
+加入其他多样化信息，Tencent
+优化负样本的选取
