@@ -65,7 +65,7 @@ class TrainDataset(Dataset):
 
 
 # ---------- 用法 ----------
-def build_train_loader(train_df, num_items, user_col='user', item_col='item',
+def build_train_loader(train_df, num_items, user_col, item_col,
                   batch_size=1024,
                  k_neg=1, num_workers=1):
 
@@ -103,7 +103,7 @@ class TestDataset(Dataset):
 
 
 # ---------- 用法 ----------
-def build_test_loader(test_df, num_items, user_col='user', item_col='item',
+def build_test_loader(test_df, num_items, user_col, item_col,
                   batch_size=1024,
                  k_neg=1, num_workers=1):
 
@@ -134,3 +134,44 @@ def build_train_loader_inbatch(train_df,user_col,item_col,batch_size=1024, shuff
                       num_workers=num_workers,
                       pin_memory=True,
                       drop_last=True)  # drop_last 保证每个 batch 大小一致，避免 CrossEntropy 报错
+
+class SeqDataset(Dataset):
+    """
+    每条样本: (hist_seq, pos_item )
+    hist_seq 已左侧 padding 到长度 max_len
+    """
+    def __init__(self, df, max_len, pad_idx, user_id, item_id):
+        super().__init__()
+        self.max_len = max_len
+        self.pad_idx = pad_idx
+
+        self.inputs, self.targets = [], []
+        for _, user_hist in df.groupby(user_id):
+            seq = user_hist[item_id].tolist()
+            for i in range(1, len(seq)):
+                hist = seq[max(0, i - max_len): i]
+                hist = [pad_idx] * (max_len - len(hist)) + hist
+                self.inputs.append(hist)
+                self.targets.append(seq[i])  # 正样本
+
+        self.inputs  = np.asarray(self.inputs,  dtype=np.int64)
+        self.targets = np.asarray(self.targets, dtype=np.int64)
+
+    def __len__(self):
+        return len(self.targets)
+
+    def __getitem__(self, idx):
+        hist = self.inputs[idx]
+        pos  = self.targets[idx]
+        return (
+            torch.tensor(hist, dtype=torch.long),    # (T,)
+            torch.tensor(pos,  dtype=torch.long),    # ()
+        )
+def build_seq_loader(df, max_len, pad_idx, user_id, item_id ,batch_size=1024, shuffle=True, num_workers=2):
+    dataset = SeqDataset(df, max_len, pad_idx, user_id, item_id)
+    return DataLoader(dataset,
+                      batch_size=batch_size,
+                      shuffle=shuffle,
+                      num_workers=num_workers,
+                      pin_memory=True,
+                      drop_last=True)
