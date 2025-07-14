@@ -2,7 +2,7 @@ import random
 from collections import Counter
 import torch
 import numpy as np
-
+import torch.nn.functional as F
 
 def hit_rate_at_k(ranked_list, true_item):
     return int(true_item in ranked_list)
@@ -48,6 +48,7 @@ def evaluate_model(test_loader, model, faiss_index, device, top_k=10):
 
         with torch.no_grad():
             user_vecs = model.get_users_embedding(user_batch)
+            F.normalize(user_vecs, dim=1, p=2)
             user_vecs = user_vecs.cpu().numpy().astype(np.float32)
 
         # FAISS 批量 topK
@@ -70,7 +71,7 @@ def evaluate_seq_model(test_loader, model, faiss_index, device, hist_tensors, to
 
         with torch.no_grad():
             seq = hist_tensors[user_batch]
-            predict = model(seq)
+            predict = F.normalize(model(seq), p=2, dim=1)
             predict = predict.cpu().numpy().astype(np.float32)
 
         # FAISS 批量 topK
