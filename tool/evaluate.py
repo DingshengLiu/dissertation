@@ -48,7 +48,7 @@ def evaluate_model(test_loader, model, faiss_index, device, top_k=10):
 
         with torch.no_grad():
             user_vecs = model.get_users_embedding(user_batch)
-            F.normalize(user_vecs, dim=1, p=2)
+            user_vecs = F.normalize(user_vecs, dim=1, p=2)
             user_vecs = user_vecs.cpu().numpy().astype(np.float32)
 
         # FAISS 批量 topK
