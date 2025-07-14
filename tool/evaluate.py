@@ -83,3 +83,4 @@ def evaluate_seq_model(test_loader, model, faiss_index, device, hist_tensors, to
             ndcgs.append(ndcg_at_k(rec_list, true_item))
 
     return np.mean(hits), np.mean(ndcgs)
+

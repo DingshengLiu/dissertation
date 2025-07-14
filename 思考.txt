@@ -10,3 +10,5 @@ Model for Video Recommendation
 原因：待分析
 
 lightgcn中训练时，发现100epoch后，损失降低很多，但是最终HR@10指标（0.0211）反而较20epoch低（0.0280），10epoch(0.0321), 5epoch(0.0328), 3epoch(0.0312), 1epoch (0.0262)
+
+SASRec hr@10指标解决popular，同时发现交叉熵损失下降极其缓慢，相较于其他Seq模型来说（推测是SASRec模型太多复杂，收敛极其缓慢）
