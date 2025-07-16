@@ -2,6 +2,25 @@ import numpy as np
 import pandas as pd
 import lmdb
 import torch
+import random
+def set_seed(seed=42):
+    random.seed(seed)  # Python 内置随机数生成器
+    np.random.seed(seed)  # Numpy 随机数
+    torch.manual_seed(seed)  # CPU 上的 Torch 随机数
+    torch.cuda.manual_seed(seed)  # 当前 GPU
+    torch.cuda.manual_seed_all(seed)  # 所有 GPU（多卡）
+
+    # 为了确保每次返回的 cudnn 算法是确定的
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False  # 禁用自动算法选择
+
+    # 对 DataLoader 的 worker 初始化也设定 seed（如果你用 num_workers > 0）
+    def seed_worker(worker_id):
+        np.random.seed(seed + worker_id)
+        random.seed(seed + worker_id)
+
+    return seed_worker
+
 def openAndSort(path,user_id,item_id,timestamp=None):
     dataset_pd = pd.read_csv(path)
     if timestamp is None:

@@ -1,4 +1,5 @@
 import random, numpy as np, pandas as pd, torch
+import preprocess
 from torch.utils.data import Dataset, DataLoader
 class TrainDataset(Dataset):
     """
@@ -74,7 +75,8 @@ def build_train_loader(train_df, num_items, user_col, item_col,
     return DataLoader(ds, batch_size=batch_size,
                       shuffle=True,  # epoch 内无放回洗牌
                       num_workers=num_workers,
-                      drop_last=True)
+                      drop_last=True,
+                      worker_init_fn = preprocess.set_seed(42))
 
 
 class TestDataset(Dataset):
@@ -174,7 +176,9 @@ def build_seq_loader(df, max_len, pad_idx, user_id, item_id ,batch_size=1024, sh
                       shuffle=shuffle,
                       num_workers=num_workers,
                       pin_memory=True,
-                      drop_last=True)
+                      drop_last=True,
+                      worker_init_fn = preprocess.set_seed(42)
+                      )
 
 class SeqNegDataset(Dataset):
     """
@@ -265,4 +269,5 @@ def build_seq_neg_loader(df, num_items, max_len, pad_idx, user_id, item_id ,batc
                       shuffle=shuffle,
                       num_workers=num_workers,
                       pin_memory=True,
-                      drop_last=True)
+                      drop_last=True,
+                      worker_init_fn = preprocess.set_seed(42))
