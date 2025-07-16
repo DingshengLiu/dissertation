@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+import lmdb
+import torch
 def openAndSort(path,user_id,item_id,timestamp=None):
     dataset_pd = pd.read_csv(path)
     if timestamp is None:
@@ -38,3 +40,61 @@ def split(df, user_id, item_id, timestamp):
     ]
     # .reset_index重置 df 的索引，使得不连续的索引重新排列整齐，drop=True表明旧的索引不再保留
     return train_df.reset_index(drop=True), test_df.reset_index(drop=True)
+
+def load_lmdb_to_dict(lmdb_path, vector_dim=None, dtype=np.float32):
+    env = lmdb.open(lmdb_path, readonly=True, subdir=False, lock=False, readahead=False)
+
+    # 如果没有指定维度，尝试从 LMDB 中读取
+    if vector_dim is None:
+        with env.begin() as txn:
+            dim_bytes = txn.get(b"__dim__")
+            if dim_bytes:
+                vector_dim = np.frombuffer(dim_bytes, dtype=np.int32)[0]
+                print(f"Found stored dimension: {vector_dim}")
+            else:
+                print("No dimension info found in LMDB, will auto-detect from first item")
+
+    raw_data = {}
+
+    with env.begin() as txn:
+        cursor = txn.cursor()
+        for key_bytes, val_bytes in cursor:
+            try:
+                key_str = key_bytes.decode()
+                if not key_str.isdigit():
+                    continue
+                key_int = int(key_str)
+            except:
+                continue
+
+            raw_data[key_int] = bytes(val_bytes)  # 拷贝 buffer
+
+    env.close()
+
+    vectors = {}
+    for k, val in raw_data.items():
+        vec = np.frombuffer(val, dtype=dtype)
+
+        # 自动检测维度
+        if vector_dim is None:
+            vector_dim = vec.size
+            print(f"Auto-detected vector dimension: {vector_dim}")
+
+        if vec.size != vector_dim:
+            raise ValueError(f"Item {k} vector dim {vec.size} != {vector_dim}")
+        vectors[k] = vec.copy()  # 拷贝防止潜在引用问题
+
+    return vectors
+
+def load_tensor_from_lmdb(lmdb_path, num_items, item_id_to_item, vector_dim=None, dtype=np.float32):
+    cover_vec = load_lmdb_to_dict(lmdb_path, vector_dim ,dtype)
+    # 冻结部分：构建 (num_items, 128) 的固定向量
+    cover_emb_list = []
+    for item_id in range(num_items):
+        item = item_id_to_item[item_id]
+        vec = cover_vec[item]  # numpy vector of shape (128,)
+        cover_emb_list.append(vec)
+
+    # 转成 tensor
+    cover_emb_tensor = torch.tensor(np.stack(cover_emb_list), dtype=torch.float32)  # shape: (num_items, 128)
+    return cover_emb_tensor
