@@ -48,7 +48,7 @@ def evaluate_model(test_loader, model, faiss_index, device, top_k=10):
 
         with torch.no_grad():
             user_vecs = model.get_users_embedding(user_batch)
-            user_vecs = F.normalize(user_vecs, dim=1, p=2)
+            # user_vecs = F.normalize(user_vecs, dim=1, p=2)
             user_vecs = user_vecs.cpu().numpy().astype(np.float32)
 
         # FAISS 批量 topK
@@ -71,7 +71,7 @@ def evaluate_seq_model(test_loader, model, faiss_index, device, hist_tensors, to
 
         with torch.no_grad():
             seq = hist_tensors[user_batch]
-            predict = F.normalize(model(seq), p=2, dim=1)
+            # predict = F.normalize(model(seq), p=2, dim=1)
             predict = predict.cpu().numpy().astype(np.float32)
 
         # FAISS 批量 topK
