@@ -38,7 +38,7 @@ def evaluate_popular(test_loader, train_df, top_k=10):
             ndcgs.append(ndcg_at_k(popular_items, true_item))
     return np.mean(hits), np.mean(ndcgs)
 
-def evaluate_model(test_loader, model, faiss_index, device, top_k=10):
+def evaluate_model(test_loader, model, faiss_index, device, top_k=10,l2_norm=False):
     hits, ndcgs = [], []
     model.eval()
 
@@ -48,7 +48,8 @@ def evaluate_model(test_loader, model, faiss_index, device, top_k=10):
 
         with torch.no_grad():
             user_vecs = model.get_users_embedding(user_batch)
-            # user_vecs = F.normalize(user_vecs, dim=1, p=2)
+            if l2_norm:
+                user_vecs = F.normalize(user_vecs, dim=1, p=2)
             user_vecs = user_vecs.cpu().numpy().astype(np.float32)
 
         # FAISS 批量 topK
@@ -61,7 +62,7 @@ def evaluate_model(test_loader, model, faiss_index, device, top_k=10):
 
     return np.mean(hits), np.mean(ndcgs)
 
-def evaluate_seq_model(test_loader, model, faiss_index, device, hist_tensors, top_k=10):
+def evaluate_seq_model(test_loader, model, faiss_index, device, hist_tensors, top_k=10,l2_norm= False):
     hits, ndcgs = [], []
     model.eval()
 
@@ -71,7 +72,9 @@ def evaluate_seq_model(test_loader, model, faiss_index, device, hist_tensors, to
 
         with torch.no_grad():
             seq = hist_tensors[user_batch]
-            # predict = F.normalize(model(seq), p=2, dim=1)
+            predict = model(seq)
+            if l2_norm:
+                predict = F.normalize(model(seq), p=2, dim=1)
             predict = predict.cpu().numpy().astype(np.float32)
 
         # FAISS 批量 topK
