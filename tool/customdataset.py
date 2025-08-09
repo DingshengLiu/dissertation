@@ -112,7 +112,7 @@ def build_test_loader(test_df, num_items, user_col, item_col,
     ds = TestDataset(test_df, user_col, item_col,
                             num_items)
     return DataLoader(ds, batch_size=batch_size,
-                      shuffle=True,  # epoch 内无放回洗牌
+                      shuffle=False,  # epoch 内无放回洗牌
                       num_workers=num_workers,
                       drop_last=False)
 
