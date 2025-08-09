@@ -42,37 +42,24 @@ def openAndSort(path,user_id,item_id,timestamp=None):
 
     return dataset_pd,num_users,num_items
 
-def split(df, user_id, item_id):
-    g = df.groupby(user_id, sort=False)
+def split(df, user_id, item_id, timestamp):
 
-    # 测试集：每个用户最后一条
-    test_df = g.tail(1)
+    # 获取每个用户的最后一条记录作为 test
+    test_df = df.groupby(user_id).tail(1)
+    train_df = df.drop(index=test_df.index)
 
-    # 验证集：每个用户倒数第二条（先取倒数两条，再去掉最后一条，避免重叠）
-    validation_df = g.tail(2).drop(index=test_df.index)
-
-    # 训练集：去掉验证+测试（注意用 union 合并索引）
-    drop_idx = test_df.index.union(validation_df.index)
-    train_df = df.drop(index=drop_idx)
-
-    # 过滤：验证/测试中的 user & item 必须在训练集中出现过
+    # 过滤 test 中那些 user/item 不在 train 中的
     train_users = set(train_df[user_id])
     train_items = set(train_df[item_id])
 
-    validation_df = validation_df[
-        validation_df[user_id].isin(train_users) &
-        validation_df[item_id].isin(train_items)
-    ]
+    # 确保测试集中出现的用户/物品都在训练集中出现过，避免某个物品仅出现在测试集中，没有在训练集中得到过训练
     test_df = test_df[
         test_df[user_id].isin(train_users) &
         test_df[item_id].isin(train_items)
     ]
+    # .reset_index重置 df 的索引，使得不连续的索引重新排列整齐，drop=True表明旧的索引不再保留
+    return train_df.reset_index(drop=True), test_df.reset_index(drop=True)
 
-    return (
-        train_df.reset_index(drop=True),
-        validation_df.reset_index(drop=True),
-        test_df.reset_index(drop=True),
-    )
 def load_lmdb_to_dict(lmdb_path, vector_dim=None, dtype=np.float32):
     env = lmdb.open(lmdb_path, readonly=True, subdir=False, lock=False, readahead=False)
 
