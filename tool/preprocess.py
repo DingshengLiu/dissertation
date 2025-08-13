@@ -4,17 +4,17 @@ import lmdb
 import torch
 import random
 def set_seed(seed=42):
-    random.seed(seed)  # Python 内置随机数生成器
-    np.random.seed(seed)  # Numpy 随机数
-    torch.manual_seed(seed)  # CPU 上的 Torch 随机数
-    torch.cuda.manual_seed(seed)  # 当前 GPU
-    torch.cuda.manual_seed_all(seed)  # 所有 GPU（多卡）
+    random.seed(seed)  # Python built-in random number generator
+    np.random.seed(seed)  # Numpy random numbers
+    torch.manual_seed(seed)  # Torch random numbers on CPU
+    torch.cuda.manual_seed(seed)  # Current GPU
+    torch.cuda.manual_seed_all(seed)  # All GPUs (multi-GPU)
 
-    # 为了确保每次返回的 cudnn 算法是确定的
+    # Ensure the cuDNN algorithms return deterministic results
     torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False  # 禁用自动算法选择
+    torch.backends.cudnn.benchmark = False  # Disable automatic algorithm selection
 
-    # 对 DataLoader 的 worker 初始化也设定 seed（如果你用 num_workers > 0）
+    # Also set the seed for DataLoader workers (if num_workers > 0)
     def seed_worker(worker_id):
         np.random.seed(seed + worker_id)
         random.seed(seed + worker_id)
@@ -43,21 +43,22 @@ def openAndSort(path,user_id,item_id,timestamp=None):
     return dataset_pd,num_users,num_items
 
 def split(df, user_id, item_id, timestamp):
-
-    # 获取每个用户的最后一条记录作为 test
+    # Get the last record of each user as the test set
     test_df = df.groupby(user_id).tail(1)
     train_df = df.drop(index=test_df.index)
 
-    # 过滤 test 中那些 user/item 不在 train 中的
+    # Filter out test rows where the user/item is not in the train set
     train_users = set(train_df[user_id])
     train_items = set(train_df[item_id])
 
-    # 确保测试集中出现的用户/物品都在训练集中出现过，避免某个物品仅出现在测试集中，没有在训练集中得到过训练
+    # Ensure that all users/items in the test set also appear in the train set
+    # This avoids having items that only appear in the test set without being seen in training
     test_df = test_df[
         test_df[user_id].isin(train_users) &
         test_df[item_id].isin(train_items)
     ]
-    # .reset_index重置 df 的索引，使得不连续的索引重新排列整齐，drop=True表明旧的索引不再保留
+    # Reset the index of the DataFrames so the index is consecutive
+    # drop=True means the old index is discarded
     return train_df.reset_index(drop=True), test_df.reset_index(drop=True)
 
 def load_lmdb_to_dict(lmdb_path, vector_dim=None, dtype=np.float32):
