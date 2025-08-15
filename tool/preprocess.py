@@ -62,15 +62,15 @@ def split(df, user_id, item_id, timestamp):
     return train_df.reset_index(drop=True), test_df.reset_index(drop=True)
 
 def split_with_val(df, user_id, item_id, timestamp):
-    # 每个用户最后一条 -> 测试集
+    # 每个用户最后一条作为测试集
     test_df = df.groupby(user_id).tail(1)
     tmp_df = df.drop(index=test_df.index)
 
-    # 每个用户倒数第二条 -> 验证集
+    # 每个用户倒数第二条作为验证集
     val_df = tmp_df.groupby(user_id).tail(1)
     train_df = tmp_df.drop(index=val_df.index)
 
-    # 过滤掉验证 / 测试集中用户或物品不在训练集的情况
+    # 过滤验证集和测试集，确保其中的 user/item 出现在训练集
     train_users = set(train_df[user_id])
     train_items = set(train_df[item_id])
 
@@ -79,17 +79,16 @@ def split_with_val(df, user_id, item_id, timestamp):
     test_df = test_df[test_df[user_id].isin(train_users) &
                       test_df[item_id].isin(train_items)]
 
-    # 包含验证集的训练集（用于最终在测试集上评估）
+    # 包含验证集的训练集（最终训练用）
     train_all_df = pd.concat([train_df, val_df], ignore_index=True)
 
-    # 重置索引
+    # 保持接口习惯：返回 (train_df, val_df, test_df, train_all_df)
     return (
-        train_df.reset_index(drop=True),       # 纯训练集（用于早停）
-        val_df.reset_index(drop=True),         # 验证集
-        test_df.reset_index(drop=True),        # 测试集
-        train_all_df.reset_index(drop=True)    # 训练+验证合并集（最终训练）
+        train_df.reset_index(drop=True),        # 用于早停
+        val_df.reset_index(drop=True),          # 验证集
+        test_df.reset_index(drop=True),         # 测试集
+        train_all_df.reset_index(drop=True)     # 最终训练集
     )
-
 def load_lmdb_to_dict(lmdb_path, vector_dim=None, dtype=np.float32):
     env = lmdb.open(lmdb_path, readonly=True, subdir=False, lock=False, readahead=False)
 
