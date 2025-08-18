@@ -62,15 +62,15 @@ def split(df, user_id, item_id, timestamp):
     return train_df.reset_index(drop=True), test_df.reset_index(drop=True)
 
 def split_with_val(df, user_id, item_id, timestamp):
-    # 每个用户最后一条作为测试集
+    # Use each user's last interaction as the test set
     test_df = df.groupby(user_id).tail(1)
     tmp_df = df.drop(index=test_df.index)
 
-    # 每个用户倒数第二条作为验证集
+    # Use each user's second-to-last interaction as the validation set
     val_df = tmp_df.groupby(user_id).tail(1)
     train_df = tmp_df.drop(index=val_df.index)
 
-    # 过滤验证集和测试集，确保其中的 user/item 出现在训练集
+    # Filter validation and test sets to ensure all users/items appear in the training set
     train_users = set(train_df[user_id])
     train_items = set(train_df[item_id])
 
@@ -79,15 +79,15 @@ def split_with_val(df, user_id, item_id, timestamp):
     test_df = test_df[test_df[user_id].isin(train_users) &
                       test_df[item_id].isin(train_items)]
 
-    # 包含验证集的训练集（最终训练用）
+    # Construct the final training set by merging train_df and val_df
     train_all_df = pd.concat([train_df, val_df], ignore_index=True)
 
-    # 保持接口习惯：返回 (train_df, val_df, test_df, train_all_df)
+    # return (train_df, val_df, test_df, train_all_df)
     return (
-        train_df.reset_index(drop=True),        # 用于早停
-        val_df.reset_index(drop=True),          # 验证集
-        test_df.reset_index(drop=True),         # 测试集
-        train_all_df.reset_index(drop=True)     # 最终训练集
+        train_df.reset_index(drop=True),        # Training set
+        val_df.reset_index(drop=True),          # Validation set
+        test_df.reset_index(drop=True),         # Test set
+        train_all_df.reset_index(drop=True)     # Final training set (train + val)
     )
 def load_lmdb_to_dict(lmdb_path, vector_dim=None, dtype=np.float32):
     env = lmdb.open(lmdb_path, readonly=True, subdir=False, lock=False, readahead=False)
