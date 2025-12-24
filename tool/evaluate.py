@@ -28,8 +28,12 @@ def evaluate_random(test_loader, item_pool, top_k=10):
 
 def evaluate_popular(test_loader, train_df, top_k=10):
     item_counts = Counter(train_df['item_id'].values)
-    popular_items = [item for item, _ in item_counts.most_common(top_k)]
-
+    popular_items = [
+    item for item, _ in sorted(
+        item_counts.items(),
+        key=lambda x: (-x[1], x[0])  # 先按频次降序，再按 item_id 升序
+    )[:top_k]
+    ]
     hits, ndcgs = [], []
     for _, item_batch in test_loader:
         item_batch = item_batch.numpy()
