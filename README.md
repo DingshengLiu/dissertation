@@ -13,3 +13,12 @@
 ### The fusion strategy and fused content can be controlled via the following two configuration fields:
 - FUSION_MODE can be set to 'base' | 'early' | 'late1' | 'late2', which determines the fusion strategy used by the model.
 - CURRENT_MODAL can be set to COVER, TITLE, or COVER-TITLE to switch between different types of multimodal content used for fusion.
+
+- FUSION_MODE controls the fusion strategy:
+  - 'base': unimodal baseline without multimodal fusion
+  - 'early', 'late1', 'late2': different fusion strategies discussed in the dissertation
+- CURRENT_MODAL controls the multimodal content used for fusion.
+### Running the experiments 
+All experiments are executed by running the corresponding *_WITH_MODAL file for each model.
+Fusion strategies and multimodal inputs can be controlled via configuration flags.
+
