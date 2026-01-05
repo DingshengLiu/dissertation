@@ -24,5 +24,5 @@ Fusion strategies and multimodal inputs can be controlled via configuration flag
 
 ### Results
 All training records and experimental results are saved in the file **"Train Record and Result"**.
-Results labeled as **validation** are obtained on the validation set and are used for hyperparameter selection.  
-Results labeled as **test** are evaluated on the test set and represent the final model performance.
+Results labeled as **validation mode** are obtained on the validation set and are used for hyperparameter selection.  
+Results labeled as **train mode** are evaluated on the test set and represent the final model performance.
