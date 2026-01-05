@@ -22,3 +22,7 @@
 All experiments are executed by running the corresponding *_WITH_MODAL file for each model.
 Fusion strategies and multimodal inputs can be controlled via configuration flags.
 
+### Results
+All training records and experimental results are saved in the file **"Train Record and Result"**.
+Results labeled as **validation mode** are obtained on the validation set and are used for hyperparameter selection.  
+Results labeled as **train mode** are evaluated on the test set and represent the final model performance.
